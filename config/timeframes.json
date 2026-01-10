@@ -1,0 +1,84 @@
+{
+  "description": "Timeframe configuration and hierarchy rules",
+  
+  "multiplier_rule": {
+    "description": "Use 4x multiplier between timeframes",
+    "example": "If trading 1H, check 4H (setup) and Daily (bias)"
+  },
+
+  "hierarchies": {
+    "scalping": {
+      "trigger": "5m",
+      "setup": "15m",
+      "bias": "1H",
+      "notes": "Fast-paced, requires active monitoring"
+    },
+    "intraday_fast": {
+      "trigger": "15m",
+      "setup": "1H",
+      "bias": "4H",
+      "notes": "Day trading with multiple opportunities"
+    },
+    "intraday_standard": {
+      "trigger": "1H",
+      "setup": "4H",
+      "bias": "Daily",
+      "notes": "Recommended for most traders"
+    },
+    "swing": {
+      "trigger": "4H",
+      "setup": "Daily",
+      "bias": "Weekly",
+      "notes": "Multi-day holds"
+    },
+    "position": {
+      "trigger": "Daily",
+      "setup": "Weekly",
+      "bias": "Monthly",
+      "notes": "Long-term positions"
+    }
+  },
+
+  "timeframe_roles": {
+    "bias": {
+      "purpose": "Determine overall direction",
+      "signal": "Zero line position",
+      "action": "MACD > 0 = Long only, MACD < 0 = Short only"
+    },
+    "setup": {
+      "purpose": "Identify trading opportunities",
+      "signals": ["Crossovers", "Divergence formations"],
+      "action": "Flag potential trades for trigger confirmation"
+    },
+    "trigger": {
+      "purpose": "Time the entry",
+      "signals": ["Histogram flip", "Histogram patterns"],
+      "action": "Execute trade when confirmed"
+    }
+  },
+
+  "alignment_rules": {
+    "full_alignment": {
+      "description": "All 3 timeframes agree",
+      "action": "Trade with full position",
+      "grade": "A or A+"
+    },
+    "partial_alignment": {
+      "description": "2 of 3 timeframes agree",
+      "action": "Trade with reduced size or pass",
+      "grade": "B"
+    },
+    "no_alignment": {
+      "description": "Conflicting signals",
+      "action": "No trade - wait for alignment",
+      "grade": "C"
+    }
+  },
+
+  "tradingview_timeframes": {
+    "available_all": ["1", "3", "5", "15", "30", "45", "60", "120", "180", "240", "D", "W", "M"],
+    "available_pro": ["1", "3", "5", "15", "30", "45", "60", "120", "180", "240", "D", "W", "M"],
+    "custom_available": true,
+    "notes": "4H (240) available on all plans"
+  }
+}

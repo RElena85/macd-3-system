@@ -1,0 +1,81 @@
+{
+  "description": "Equities/Indices instrument-specific settings",
+  
+  "instruments": {
+    "SPY": {
+      "category": "etf_index",
+      "distanceThreshold": 0.5,
+      "percentageThreshold": 0.1,
+      "atrMultiplier": 1.2,
+      "volatilityAdjustment": "medium",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "S&P 500 ETF - most liquid"
+    },
+    "QQQ": {
+      "category": "etf_index",
+      "distanceThreshold": 0.8,
+      "percentageThreshold": 0.15,
+      "atrMultiplier": 1.3,
+      "volatilityAdjustment": "medium-high",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "Nasdaq 100 - more volatile than SPY"
+    },
+    "IWM": {
+      "category": "etf_index",
+      "distanceThreshold": 0.4,
+      "percentageThreshold": 0.15,
+      "atrMultiplier": 1.4,
+      "volatilityAdjustment": "high",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "Russell 2000 - highest volatility"
+    },
+    "AAPL": {
+      "category": "stock_megacap",
+      "distanceThreshold": 1.0,
+      "percentageThreshold": 0.3,
+      "atrMultiplier": 1.2,
+      "volatilityAdjustment": "medium",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "Mega-cap - liquid, moderate volatility"
+    },
+    "TSLA": {
+      "category": "stock_highvol",
+      "distanceThreshold": 3.0,
+      "percentageThreshold": 0.5,
+      "atrMultiplier": 1.8,
+      "volatilityAdjustment": "very_high",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "High volatility - wider parameters needed"
+    },
+    "NVDA": {
+      "category": "stock_highvol",
+      "distanceThreshold": 2.0,
+      "percentageThreshold": 0.4,
+      "atrMultiplier": 1.5,
+      "volatilityAdjustment": "high",
+      "marketHours": "09:30-16:00 ET",
+      "notes": "High momentum stock"
+    }
+  },
+
+  "market_sessions": {
+    "premarket": { "start": "04:00", "end": "09:30", "timezone": "ET" },
+    "regular": { "start": "09:30", "end": "16:00", "timezone": "ET" },
+    "afterhours": { "start": "16:00", "end": "20:00", "timezone": "ET" }
+  },
+
+  "index_futures": {
+    "ES": {
+      "description": "S&P 500 E-mini Futures",
+      "distanceThreshold": 5,
+      "atrMultiplier": 1.2,
+      "tradingHours": "Nearly 24/5"
+    },
+    "NQ": {
+      "description": "Nasdaq 100 E-mini Futures",
+      "distanceThreshold": 15,
+      "atrMultiplier": 1.4,
+      "tradingHours": "Nearly 24/5"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "description": "Instrument-specific MACD distance thresholds and settings",
+  "note": "Distance threshold determines what qualifies as 'far from zero' for each instrument",
+  
+  "instruments": {
+    "BTC/USD": {
+      "category": "crypto",
+      "distanceThreshold": 500,
+      "distanceThresholdPercent": null,
+      "atrMultiplier": 1.5,
+      "volatilityAdjustment": "high",
+      "notes": "High volatility - use wider stops"
+    },
+    "ETH/USD": {
+      "category": "crypto",
+      "distanceThreshold": 30,
+      "distanceThresholdPercent": null,
+      "atrMultiplier": 1.5,
+      "volatilityAdjustment": "high",
+      "notes": "Scale threshold based on price"
+    },
+    "SOL/USD": {
+      "category": "crypto",
+      "distanceThreshold": 2,
+      "distanceThresholdPercent": null,
+      "atrMultiplier": 1.5,
+      "volatilityAdjustment": "high",
+      "notes": "Adjust as price changes"
+    }
+  },
+
+  "calculation_method": {
+    "description": "How to determine if crossover is 'far enough' from zero",
+    "options": [
+      {
+        "method": "absolute",
+        "description": "Fixed value threshold",
+        "example": "MACD > 500 for BTC"
+      },
+      {
+        "method": "atr_based", 
+        "description": "Dynamic based on ATR",
+        "example": "MACD > ATR(14) * multiplier"
+      },
+      {
+        "method": "percentage",
+        "description": "Percentage of price",
+        "example": "MACD > price * 0.001"
+      }
+    ],
+    "recommended": "atr_based for adaptability"
+  }
+}

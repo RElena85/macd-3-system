@@ -1,0 +1,94 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - MASTER INDICATOR
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 5)
+// Description: Combined master indicator integrating all three systems
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+indicator("MACD Money Map - Master", shorttitle="MACD-MM Master", overlay=true)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN - PHASE 5
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// 5.1 System Integration
+// ----------------------
+// - Import/combine all three system logics
+// - Unified signal processing pipeline
+// - Single indicator for all functionality
+//
+// 5.2 Signal Scoring & Prioritization
+// -----------------------------------
+// Point System:
+// - Trend System Signal: +2 points
+// - Reversal System Signal: +3 points (higher risk/reward)
+// - Each aligned timeframe: +1 point
+// - Structure confluence: +1 point
+// - Distance qualification: +1 point
+//
+// Maximum possible: 8 points
+// Minimum to trade: 5 points
+//
+// 5.3 Visual Dashboard Components
+// -------------------------------
+// Dashboard Table:
+// ┌─────────────────────────────────────┐
+// │     MACD MONEY MAP DASHBOARD        │
+// ├─────────────────────────────────────┤
+// │ BIAS:        [LONG ✓] / [SHORT]     │
+// │ GRADE:       [A+]                   │
+// │ SCORE:       [7/8]                  │
+// ├─────────────────────────────────────┤
+// │ SYSTEMS:                            │
+// │ ✓ Trend    - Qualified crossover    │
+// │ ✓ Reversal - Div + Flip            │
+// │ ✓ Confirm  - 3/3 TF aligned        │
+// ├─────────────────────────────────────┤
+// │ DETAILS:                            │
+// │ MACD:       0.85                    │
+// │ Distance:   1.2 (threshold: 0.5)   │
+// │ At S/R:     YES (support @ 50.20)  │
+// └─────────────────────────────────────┘
+//
+// 5.4 Entry/Exit Markers
+// ----------------------
+// - Large triangle for A+ entries
+// - Medium triangle for A entries
+// - Small marker for B setups (warning)
+// - Exit markers when opposite cross
+//
+// 5.5 Information Panel
+// ---------------------
+// Show in real-time:
+// - Current MACD value
+// - Distance from zero (actual vs threshold)
+// - Time/candles since last crossover
+// - Divergence status (None/Forming/Confirmed)
+// - Histogram pattern status
+// - MTF alignment status
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// TODO: Implement full master indicator
+// This is a placeholder file to be completed in Phase 5
+
+// Placeholder - basic functionality
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+// Basic bias display
+var label biasLabel = na
+label.delete(biasLabel)
+biasLabel := label.new(
+    bar_index, high,
+    macdLine > 0 ? "BIAS: LONG" : "BIAS: SHORT",
+    color = macdLine > 0 ? color.green : color.red,
+    textcolor = color.white,
+    style = label.style_label_down)
+
+// Placeholder alerts
+alertcondition(false, title="A+ Long Entry", message="MACD Money Map: A+ LONG Entry")
+alertcondition(false, title="A+ Short Entry", message="MACD Money Map: A+ SHORT Entry")
+alertcondition(false, title="Exit Signal", message="MACD Money Map: Exit Signal")

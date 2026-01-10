@@ -1,0 +1,58 @@
+{
+  "description": "Forex instrument-specific settings",
+  
+  "instruments": {
+    "EUR/USD": {
+      "category": "forex_major",
+      "distanceThreshold": 0.0015,
+      "pipValue": 0.0001,
+      "atrMultiplier": 1.0,
+      "volatilityAdjustment": "medium",
+      "bestSessions": ["London", "NY"],
+      "notes": "Most liquid pair - standard settings work well"
+    },
+    "GBP/USD": {
+      "category": "forex_major",
+      "distanceThreshold": 0.0020,
+      "pipValue": 0.0001,
+      "atrMultiplier": 1.2,
+      "volatilityAdjustment": "medium-high",
+      "bestSessions": ["London", "NY"],
+      "notes": "More volatile than EUR/USD"
+    },
+    "USD/JPY": {
+      "category": "forex_major",
+      "distanceThreshold": 0.15,
+      "pipValue": 0.01,
+      "atrMultiplier": 1.0,
+      "volatilityAdjustment": "medium",
+      "bestSessions": ["Tokyo", "NY"],
+      "notes": "Different pip scale - adjust threshold"
+    },
+    "AUD/USD": {
+      "category": "forex_major",
+      "distanceThreshold": 0.0012,
+      "pipValue": 0.0001,
+      "atrMultiplier": 1.1,
+      "volatilityAdjustment": "medium",
+      "bestSessions": ["Sydney", "NY"],
+      "notes": "Commodity currency - watch risk sentiment"
+    },
+    "EUR/GBP": {
+      "category": "forex_cross",
+      "distanceThreshold": 0.0010,
+      "pipValue": 0.0001,
+      "atrMultiplier": 0.9,
+      "volatilityAdjustment": "low-medium",
+      "bestSessions": ["London"],
+      "notes": "Lower volatility cross"
+    }
+  },
+
+  "session_times_utc": {
+    "Sydney": { "open": "21:00", "close": "06:00" },
+    "Tokyo": { "open": "00:00", "close": "09:00" },
+    "London": { "open": "07:00", "close": "16:00" },
+    "NY": { "open": "12:00", "close": "21:00" }
+  }
+}

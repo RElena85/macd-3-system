@@ -1,0 +1,132 @@
+{
+  "description": "Webhook payload templates for MACD Money Map alerts",
+  "version": "1.0",
+
+  "templates": {
+    "entry_signal": {
+      "description": "Payload for entry signals",
+      "payload": {
+        "strategy": "MACD_Money_Map",
+        "signal_type": "entry",
+        "direction": "{{strategy.order.action}}",
+        "ticker": "{{ticker}}",
+        "exchange": "{{exchange}}",
+        "price": "{{close}}",
+        "time": "{{time}}",
+        "timenow": "{{timenow}}",
+        "interval": "{{interval}}",
+        "grade": "{{plot_0}}",
+        "macd_value": "{{plot_1}}",
+        "signal_value": "{{plot_2}}",
+        "histogram": "{{plot_3}}",
+        "volume": "{{volume}}"
+      }
+    },
+
+    "exit_signal": {
+      "description": "Payload for exit signals",
+      "payload": {
+        "strategy": "MACD_Money_Map",
+        "signal_type": "exit",
+        "exit_reason": "{{strategy.order.comment}}",
+        "ticker": "{{ticker}}",
+        "price": "{{close}}",
+        "time": "{{time}}",
+        "interval": "{{interval}}"
+      }
+    },
+
+    "setup_alert": {
+      "description": "Payload for setup forming alerts",
+      "payload": {
+        "strategy": "MACD_Money_Map",
+        "signal_type": "setup",
+        "setup_type": "{{plot_0}}",
+        "ticker": "{{ticker}}",
+        "price": "{{close}}",
+        "time": "{{time}}",
+        "interval": "{{interval}}",
+        "macd_value": "{{plot_1}}",
+        "distance_from_zero": "{{plot_2}}"
+      }
+    },
+
+    "divergence_alert": {
+      "description": "Payload for divergence alerts",
+      "payload": {
+        "strategy": "MACD_Money_Map",
+        "signal_type": "divergence",
+        "divergence_type": "{{plot_0}}",
+        "ticker": "{{ticker}}",
+        "price": "{{close}}",
+        "time": "{{time}}",
+        "interval": "{{interval}}"
+      }
+    },
+
+    "management_alert": {
+      "description": "Payload for trade management alerts",
+      "payload": {
+        "strategy": "MACD_Money_Map",
+        "signal_type": "management",
+        "action": "{{strategy.order.comment}}",
+        "ticker": "{{ticker}}",
+        "price": "{{close}}",
+        "time": "{{time}}"
+      }
+    }
+  },
+
+  "webhook_services": {
+    "3commas": {
+      "description": "For automated bot execution",
+      "url_format": "https://3commas.io/trade_signal/trading_view",
+      "notes": "Requires API setup in 3Commas"
+    },
+    "discord": {
+      "description": "For Discord notifications",
+      "url_format": "https://discord.com/api/webhooks/{webhook_id}/{webhook_token}",
+      "notes": "Create webhook in Discord channel settings"
+    },
+    "telegram": {
+      "description": "For Telegram notifications",
+      "url_format": "https://api.telegram.org/bot{bot_token}/sendMessage",
+      "notes": "Requires Telegram bot setup"
+    },
+    "custom": {
+      "description": "For custom webhook endpoints",
+      "url_format": "https://your-domain.com/webhook/tradingview",
+      "notes": "Build your own handler"
+    }
+  },
+
+  "message_variables": {
+    "tradingview_builtin": [
+      "{{ticker}}", 
+      "{{exchange}}", 
+      "{{close}}", 
+      "{{open}}", 
+      "{{high}}", 
+      "{{low}}", 
+      "{{volume}}", 
+      "{{time}}", 
+      "{{timenow}}", 
+      "{{interval}}"
+    ],
+    "strategy_specific": [
+      "{{strategy.order.action}}", 
+      "{{strategy.order.contracts}}", 
+      "{{strategy.order.price}}", 
+      "{{strategy.order.id}}", 
+      "{{strategy.order.comment}}", 
+      "{{strategy.position_size}}"
+    ],
+    "plot_values": [
+      "{{plot_0}}", 
+      "{{plot_1}}", 
+      "{{plot_2}}", 
+      "{{plot_3}}", 
+      "{{plot_4}}"
+    ]
+  }
+}

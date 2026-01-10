@@ -1,0 +1,130 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - MTF UTILITIES LIBRARY
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 4)
+// Description: Multi-timeframe data retrieval and alignment utilities
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// FUNCTION: getHigherTimeframe
+// ----------------------------
+// Parameters:
+// - currentTF: current timeframe string
+// - multiplier: multiplier to apply (default: 4)
+// Returns: higher timeframe string
+//
+// Logic:
+// - Parse current timeframe
+// - Multiply by factor
+// - Return valid TradingView timeframe string
+//
+// Example: "60" (1H) * 4 = "240" (4H)
+//
+// FUNCTION: getTimeframeHierarchy
+// -------------------------------
+// Parameters:
+// - triggerTF: the trading/trigger timeframe
+// Returns: array of [triggerTF, setupTF, biasTF]
+//
+// Predefined hierarchies:
+// - 15m → [15m, 1H, 4H]
+// - 1H → [1H, 4H, Daily]
+// - 4H → [4H, Daily, Weekly]
+//
+// FUNCTION: requestMACDData
+// -------------------------
+// Parameters:
+// - tf: timeframe to request
+// - fast, slow, signal: MACD parameters
+// Returns: tuple [macdLine, signalLine, histogram]
+//
+// FUNCTION: getZeroLinePosition
+// -----------------------------
+// Parameters:
+// - macdValue: MACD line value
+// Returns: 1 (above zero), -1 (below zero), 0 (at zero)
+//
+// FUNCTION: checkAlignment
+// ------------------------
+// Parameters:
+// - biasTF_position: zero line position on bias TF
+// - setupTF_signal: signal on setup TF
+// - triggerTF_histogram: histogram on trigger TF
+// Returns:
+// - alignmentScore: -3 to +3
+// - isFullyAligned: boolean
+// - alignmentDirection: "long", "short", "neutral"
+//
+// FUNCTION: calculateAlignmentScore
+// ---------------------------------
+// Parameters:
+// - conditions: array of boolean conditions
+// - weights: array of weights for each condition
+// Returns: total score
+//
+// TABLE DISPLAY FUNCTIONS
+// -----------------------
+// - createMTFTable(): Creates the MTF status table
+// - updateMTFTable(): Updates values in real-time
+// - formatTFStatus(): Formats status for display
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+indicator("MTF Utilities Library (Dev)", overlay=true)
+
+// Input for development testing
+testTF1 = input.timeframe("60", "Trigger TF")
+testTF2 = input.timeframe("240", "Setup TF")
+testTF3 = input.timeframe("D", "Bias TF")
+
+// Request MACD from multiple timeframes
+[macd1, signal1, hist1] = request.security(syminfo.tickerid, testTF1, 
+    ta.macd(close, 12, 26, 9))
+[macd2, signal2, hist2] = request.security(syminfo.tickerid, testTF2, 
+    ta.macd(close, 12, 26, 9))
+[macd3, signal3, hist3] = request.security(syminfo.tickerid, testTF3, 
+    ta.macd(close, 12, 26, 9))
+
+// Calculate alignment (simplified)
+tf1_long = macd1 > 0
+tf2_long = macd2 > 0
+tf3_long = macd3 > 0
+
+allLong = tf1_long and tf2_long and tf3_long
+allShort = not tf1_long and not tf2_long and not tf3_long
+
+// Simple alignment display
+var table mtfTable = table.new(position.top_right, 2, 4, bgcolor=color.black)
+
+if barstate.islast
+    table.cell(mtfTable, 0, 0, "Timeframe", text_color=color.white)
+    table.cell(mtfTable, 1, 0, "Bias", text_color=color.white)
+    
+    table.cell(mtfTable, 0, 1, "Trigger", text_color=color.white)
+    table.cell(mtfTable, 1, 1, tf1_long ? "LONG" : "SHORT", 
+        text_color=tf1_long ? color.green : color.red)
+    
+    table.cell(mtfTable, 0, 2, "Setup", text_color=color.white)
+    table.cell(mtfTable, 1, 2, tf2_long ? "LONG" : "SHORT", 
+        text_color=tf2_long ? color.green : color.red)
+    
+    table.cell(mtfTable, 0, 3, "Bias", text_color=color.white)
+    table.cell(mtfTable, 1, 3, tf3_long ? "LONG" : "SHORT", 
+        text_color=tf3_long ? color.green : color.red)
+
+// Background for alignment
+bgcolor(allLong ? color.new(color.green, 90) : 
+        allShort ? color.new(color.red, 90) : 
+        color.new(color.gray, 95))
+
+// TODO: Implement proper timeframe calculation functions
+// TODO: Add dynamic timeframe hierarchy detection
+// TODO: Create comprehensive alignment scoring
+// TODO: Convert to library format

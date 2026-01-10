@@ -1,0 +1,115 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - BACKTEST STRATEGY
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 7)
+// Description: Full strategy for backtesting with entry, exit, and risk management
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+strategy("MACD Money Map - Backtest", 
+    shorttitle="MACD-MM Strategy",
+    overlay=true,
+    default_qty_type=strategy.percent_of_equity,
+    default_qty_value=100,
+    initial_capital=10000,
+    commission_type=strategy.commission.percent,
+    commission_value=0.1,
+    slippage=2)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN - PHASE 7
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// 7.1 Strategy Conversion
+// -----------------------
+// - Convert indicator logic to strategy
+// - Add strategy() declaration with proper settings
+// - Implement strategy.entry() calls
+// - Implement strategy.close() calls
+// - Add strategy.exit() for stops and targets
+//
+// 7.2 Risk Management Implementation
+// ----------------------------------
+// Entry Rules:
+// - Enter at bar close only (use barstate.isconfirmed)
+// - Calculate position size based on risk %
+// - Verify sufficient capital
+//
+// Stop Loss:
+// - Long: Below recent swing low - (ATR * buffer)
+// - Short: Above recent swing high + (ATR * buffer)
+// - Use ATR-based buffer
+//
+// Take Profit:
+// - Target 1: 2R (50% of position)
+// - Target 2: Trail with opposite crossover
+//
+// Trailing Stop:
+// - Activate after 2R target hit
+// - Trail by swing points or ATR
+//
+// 7.3 Performance Metrics
+// -----------------------
+// Track:
+// - Win rate
+// - Average R-multiple
+// - Profit factor
+// - Maximum drawdown
+// - Sharpe ratio
+// - Number of trades
+// - Average hold time
+//
+// 7.4 Parameter Optimization
+// --------------------------
+// Test variations of:
+// - MACD lengths (fast, slow, signal)
+// - Distance threshold multipliers
+// - Confirmation candle counts
+// - Stop loss buffer sizes
+// - Target R-multiples
+//
+// Optimization rules:
+// - Minimum 50 trades per test
+// - Walk-forward validation
+// - Multiple instruments
+// - Avoid over-fitting
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// TODO: Implement full strategy
+// This is a placeholder file to be completed in Phase 7
+
+// Inputs
+fastLen = input.int(12, "Fast Length")
+slowLen = input.int(26, "Slow Length")
+signalLen = input.int(9, "Signal Length")
+riskPercent = input.float(1.0, "Risk %", minval=0.1, maxval=5.0)
+targetR = input.float(2.0, "Target R-Multiple", minval=1.0)
+
+// MACD Calculation
+[macdLine, signalLine, histLine] = ta.macd(close, fastLen, slowLen, signalLen)
+
+// Basic crossover signals (placeholder)
+longCondition = ta.crossover(macdLine, signalLine) and macdLine > 0
+shortCondition = ta.crossunder(macdLine, signalLine) and macdLine < 0
+
+// Placeholder entries (to be replaced with full logic)
+if longCondition and barstate.isconfirmed
+    strategy.entry("Long", strategy.long)
+
+if shortCondition and barstate.isconfirmed
+    strategy.entry("Short", strategy.short)
+
+// Basic exit on opposite signal
+if shortCondition and strategy.position_size > 0
+    strategy.close("Long")
+
+if longCondition and strategy.position_size < 0
+    strategy.close("Short")
+
+// TODO: Add proper stop loss and take profit
+// TODO: Add partial profit taking
+// TODO: Add trailing stop logic
+// TODO: Integrate all three systems

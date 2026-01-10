@@ -1,0 +1,116 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - HISTOGRAM PATTERNS LIBRARY
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 3)
+// Description: Reusable functions for histogram pattern recognition
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// PATTERN 1: THE FLIP
+// -------------------
+// FUNCTION: detectHistogramFlip
+// Parameters:
+// - histogram: histogram series
+// - minConsecutive: minimum same-color bars before flip (default: 4)
+// Returns: 
+// - flipType: 1 (bullish flip), -1 (bearish flip), 0 (no flip)
+// - consecutiveCount: how many bars were same color before flip
+//
+// Logic:
+// 1. Count consecutive positive bars
+// 2. Count consecutive negative bars
+// 3. On color change:
+//    - If was negative for 4+, now positive = bullish flip
+//    - If was positive for 4+, now negative = bearish flip
+//
+// PATTERN 2: THE SHRINKING TOWER
+// ------------------------------
+// FUNCTION: detectShrinkingTower
+// Parameters:
+// - histogram: histogram series
+// - minShrinkBars: minimum shrinking bars (default: 3)
+// - shrinkThreshold: percentage shrink to signal (default: 50%)
+// Returns:
+// - shrinkType: 1 (shrinking green), -1 (shrinking red), 0 (none)
+// - shrinkPercent: percentage shrunk from peak
+// - peakValue: the peak histogram value
+//
+// Logic:
+// 1. Find local peak in histogram (same color)
+// 2. Track consecutive shrinking bars
+// 3. Calculate shrink percentage from peak
+// 4. Signal when threshold exceeded
+//
+// PATTERN 3: THE ZERO BOUNCE
+// --------------------------
+// FUNCTION: detectZeroBounce
+// Parameters:
+// - histogram: histogram series
+// - bounceThreshold: how close to zero counts as "approaching"
+// Returns:
+// - bounceType: 1 (bounce up), -1 (bounce down), 0 (none)
+// - bounceStrength: how strong the bounce
+//
+// Logic:
+// 1. Detect histogram approaching zero (within threshold)
+// 2. Detect histogram moving away without crossing
+// 3. Calculate bounce strength
+//
+// UTILITY FUNCTIONS
+// -----------------
+// - getHistogramColor(histogram) -> 1 (green) or -1 (red)
+// - getConsecutiveCount(histogram) -> number of same-color bars
+// - isHistogramGrowing(histogram) -> boolean
+// - isHistogramShrinking(histogram) -> boolean
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+indicator("Histogram Patterns Library (Dev)", overlay=false)
+
+// Basic MACD
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+// Placeholder pattern detection
+isPositive = histLine > 0
+isNegative = histLine < 0
+
+// Count consecutive bars (simplified)
+var int positiveCount = 0
+var int negativeCount = 0
+
+if isPositive
+    positiveCount += 1
+    negativeCount := 0
+else if isNegative
+    negativeCount += 1
+    positiveCount := 0
+
+// Detect flip (simplified)
+bullishFlip = isPositive and negativeCount[1] >= 4
+bearishFlip = isNegative and positiveCount[1] >= 4
+
+// Detect shrinking (simplified)
+isShrinking = math.abs(histLine) < math.abs(histLine[1])
+
+// Plot for development
+plot(histLine, "Histogram", style=plot.style_columns, 
+    color=isPositive ? color.green : color.red)
+hline(0)
+
+// Mark patterns
+plotshape(bullishFlip, "Bullish Flip", style=shape.triangleup, 
+    location=location.bottom, color=color.green, size=size.small)
+plotshape(bearishFlip, "Bearish Flip", style=shape.triangledown, 
+    location=location.top, color=color.red, size=size.small)
+
+// TODO: Implement full pattern detection with proper state tracking
+// TODO: Add shrinking tower detection
+// TODO: Add zero bounce detection
+// TODO: Convert to library format

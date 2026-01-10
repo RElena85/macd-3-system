@@ -1,0 +1,64 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - TREND SYSTEM (SYSTEM 1)
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 2)
+// Description: Trend detection with zero line rule and qualified crossovers
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+indicator("MACD Money Map - Trend System", shorttitle="MACD-MM Trend", overlay=false)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN - PHASE 2
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// 2.1 Zero Line Rule Implementation
+// ---------------------------------
+// - Above zero → Long bias visual indicator (green background/label)
+// - Below zero → Short bias visual indicator (red background/label)
+// - Clear "LONGS ONLY" / "SHORTS ONLY" display
+//
+// 2.2 Crossover Detection Engine
+// ------------------------------
+// - Bullish crossover detection (MACD crosses above Signal)
+// - Bearish crossover detection (MACD crosses below Signal)
+// - Record timestamp and price of crossover
+// - Track candles since crossover
+//
+// 2.3 Distance Qualification Filter
+// ---------------------------------
+// - Calculate absolute distance from zero line
+// - Compare against configurable threshold
+// - Support multiple threshold methods:
+//   a) Fixed value
+//   b) ATR-based (recommended)
+//   c) Percentage-based
+// - Mark crossovers as "Qualified" or "Chop Zone"
+// - Visual differentiation between qualified/unqualified
+//
+// 2.4 Candle Confirmation Delay
+// -----------------------------
+// - Counter for candles since crossover
+// - Configurable wait period (default: 2-3 candles)
+// - Validate crossover still valid after wait
+// - Cancel signal if invalidated
+// - Visual countdown display
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// TODO: Implement full trend system
+// This is a placeholder file to be completed in Phase 2
+
+// Basic MACD for reference
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+plot(macdLine, "MACD", color=color.blue)
+plot(signalLine, "Signal", color=color.orange)
+hline(0, "Zero", color=color.gray)
+
+// Placeholder alert
+alertcondition(ta.crossover(macdLine, signalLine), 
+    title="Trend System - Long Setup", 
+    message="Placeholder: Trend Long Setup")

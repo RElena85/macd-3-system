@@ -1,0 +1,82 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - REVERSAL SYSTEM (SYSTEM 2)
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 3)
+// Description: Reversal detection with divergence and histogram patterns
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+indicator("MACD Money Map - Reversal System", shorttitle="MACD-MM Reversal", overlay=false)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN - PHASE 3
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// 3.1 Divergence Detection Algorithm
+// ----------------------------------
+// Bullish Divergence:
+// - Detect price making Lower Low
+// - Detect MACD making Higher Low
+// - Use pivot point detection
+// - Configure lookback period (5-10 bars)
+// - Draw divergence lines on chart
+//
+// Bearish Divergence:
+// - Detect price making Higher High
+// - Detect MACD making Lower High
+// - Same pivot and lookback logic
+//
+// Key Concept: Divergence = ALERT (not entry)
+//
+// 3.2 Histogram Pattern Recognition
+// ---------------------------------
+//
+// Pattern A - "The Flip":
+// - Track consecutive same-color bars
+// - Detect first opposite-color bar
+// - Minimum consecutive requirement: 4 bars
+// - Visual marker on flip bar
+// - Alert on detection
+//
+// Pattern B - "The Shrinking Tower":
+// - Detect 3+ consecutive shrinking bars
+// - Same color requirement
+// - Calculate shrink percentage from peak
+// - Alert when shrink > 50%
+// - Show shrink percentage
+//
+// Pattern C - "The Zero Bounce":
+// - Monitor histogram approaching zero
+// - Detect bounce before crossing
+// - Calculate bounce threshold
+// - Mark as continuation signal
+//
+// 3.3 Reversal Signal Combination
+// -------------------------------
+// - State machine for divergence (NONE -> ALERT)
+// - State machine for histogram (NONE -> TRIGGER)
+// - Combined state: DIVERGENCE + HISTOGRAM = ENTRY
+// - Track both states independently
+// - Generate entry signal only when both present
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// TODO: Implement full reversal system
+// This is a placeholder file to be completed in Phase 3
+
+// Basic MACD for reference
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+plot(histLine, "Histogram", style=plot.style_columns, 
+    color=histLine >= 0 ? color.green : color.red)
+hline(0, "Zero", color=color.gray)
+
+// Placeholder for divergence detection
+// TODO: Implement proper pivot-based divergence
+
+// Placeholder alert
+alertcondition(false, 
+    title="Reversal System - Entry", 
+    message="Placeholder: Reversal Entry")

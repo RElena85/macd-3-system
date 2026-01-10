@@ -1,0 +1,134 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - BASE INDICATOR
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 1)
+// Description: Core MACD calculation with enhanced visualization
+// Reference: https://www.youtube.com/watch?v=S2HaCa0b-bY
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+indicator("MACD Money Map - Base", shorttitle="MACD-MM", overlay=false)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INPUTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// MACD Settings
+fastLength   = input.int(12, "Fast Length", minval=1, group="MACD Settings")
+slowLength   = input.int(26, "Slow Length", minval=1, group="MACD Settings")
+signalLength = input.int(9, "Signal Length", minval=1, group="MACD Settings")
+src          = input.source(close, "Source", group="MACD Settings")
+
+// Distance Settings
+useATRDistance  = input.bool(true, "Use ATR-Based Distance", group="Distance Settings")
+atrLength       = input.int(14, "ATR Length", minval=1, group="Distance Settings")
+atrMultiplier   = input.float(1.0, "ATR Multiplier", minval=0.1, step=0.1, group="Distance Settings")
+fixedDistance   = input.float(0.5, "Fixed Distance (if not using ATR)", minval=0, group="Distance Settings")
+
+// Visual Settings
+showZeroLine    = input.bool(true, "Show Zero Line", group="Visual Settings")
+showBackground  = input.bool(true, "Show Bias Background", group="Visual Settings")
+showDistance    = input.bool(true, "Show Distance Threshold", group="Visual Settings")
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CALCULATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// MACD Calculation
+[macdLine, signalLine, histLine] = ta.macd(src, fastLength, slowLength, signalLength)
+
+// ATR for distance threshold
+atr = ta.atr(atrLength)
+distanceThreshold = useATRDistance ? atr * atrMultiplier : fixedDistance
+
+// Zero line position
+aboveZero = macdLine > 0
+belowZero = macdLine < 0
+
+// Distance qualification
+distanceFromZero = math.abs(macdLine)
+isQualified = distanceFromZero > distanceThreshold
+
+// Crossovers
+bullishCross = ta.crossover(macdLine, signalLine)
+bearishCross = ta.crossunder(macdLine, signalLine)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISUALIZATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+// MACD Line
+plot(macdLine, "MACD", color=color.blue, linewidth=2)
+
+// Signal Line
+plot(signalLine, "Signal", color=color.orange, linewidth=1)
+
+// Histogram with gradient colors
+histColor = histLine >= 0 ? 
+    (histLine > histLine[1] ? color.new(color.green, 0) : color.new(color.green, 50)) :
+    (histLine < histLine[1] ? color.new(color.red, 0) : color.new(color.red, 50))
+plot(histLine, "Histogram", style=plot.style_columns, color=histColor)
+
+// Zero Line
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_solid, linewidth=1)
+
+// Distance Threshold Lines (optional)
+upperThreshold = plot(showDistance ? distanceThreshold : na, "Upper Threshold", 
+    color=color.new(color.green, 70), style=plot.style_line)
+lowerThreshold = plot(showDistance ? -distanceThreshold : na, "Lower Threshold", 
+    color=color.new(color.red, 70), style=plot.style_line)
+
+// Background coloring for bias
+bgcolor(showBackground and aboveZero ? color.new(color.green, 95) : 
+        showBackground and belowZero ? color.new(color.red, 95) : na)
+
+// Crossover markers
+plotshape(bullishCross and isQualified and aboveZero, "Qualified Long", 
+    style=shape.triangleup, location=location.bottom, 
+    color=color.green, size=size.small)
+plotshape(bearishCross and isQualified and belowZero, "Qualified Short", 
+    style=shape.triangledown, location=location.top, 
+    color=color.red, size=size.small)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ALERTS (Placeholder)
+// ══════════════════════════════════════════════════════════════════════════════
+
+alertcondition(bullishCross and isQualified and aboveZero, 
+    title="Qualified Long Crossover", 
+    message="MACD Money Map: Qualified LONG crossover on {{ticker}}")
+
+alertcondition(bearishCross and isQualified and belowZero, 
+    title="Qualified Short Crossover", 
+    message="MACD Money Map: Qualified SHORT crossover on {{ticker}}")
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INFO TABLE (Placeholder)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// TODO: Add information table showing:
+// - Current bias (Long/Short)
+// - MACD value
+// - Distance from zero
+// - Distance threshold
+// - Qualification status
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION NOTES
+// ══════════════════════════════════════════════════════════════════════════════
+// 
+// Phase 1 Tasks:
+// [x] Basic MACD calculation
+// [x] Zero line visualization
+// [x] Histogram with color gradient
+// [x] Distance threshold calculation
+// [x] Basic crossover detection
+// [ ] Information dashboard table
+// [ ] Comprehensive testing
+//
+// Next Steps:
+// - Implement System 1 (Trend) features in macd_trend_system.pine
+// - Add confirmation candle logic
+// - Enhance visual dashboard
+//
+// ══════════════════════════════════════════════════════════════════════════════

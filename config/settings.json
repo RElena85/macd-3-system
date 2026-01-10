@@ -1,0 +1,118 @@
+{
+  "project": "MACD Money Map",
+  "version": "1.0.0",
+  "platform": "TradingView",
+  "license": "Pro",
+  
+  "macd": {
+    "fastLength": 12,
+    "slowLength": 26,
+    "signalLength": 9,
+    "source": "close",
+    "description": "Standard MACD parameters - adjust per instrument if needed"
+  },
+
+  "system1_trend": {
+    "enabled": true,
+    "zeroLineStrict": true,
+    "distanceQualification": {
+      "enabled": true,
+      "description": "Only take crossovers far from zero line"
+    },
+    "confirmationCandles": 2,
+    "chopZoneAvoidance": true
+  },
+
+  "system2_reversal": {
+    "enabled": true,
+    "divergence": {
+      "lookbackPeriod": 10,
+      "pivotLeftBars": 5,
+      "pivotRightBars": 2
+    },
+    "histogramPatterns": {
+      "flip": {
+        "enabled": true,
+        "minConsecutiveBars": 4
+      },
+      "shrinkingTower": {
+        "enabled": true,
+        "minShrinkingBars": 3,
+        "shrinkThresholdPercent": 50
+      },
+      "zeroBounce": {
+        "enabled": true,
+        "bounceThreshold": 0.1
+      }
+    }
+  },
+
+  "system3_confirmation": {
+    "enabled": true,
+    "multiTimeframe": {
+      "enabled": true,
+      "requireAllAligned": true,
+      "timeframeMultiplier": 4,
+      "hierarchy": {
+        "description": "bias -> setup -> trigger",
+        "example_1h": ["Daily", "4H", "1H"],
+        "example_15m": ["4H", "1H", "15m"]
+      }
+    },
+    "priceStructure": {
+      "enabled": true,
+      "supportResistance": true,
+      "keyLevelBonus": true
+    }
+  },
+
+  "riskManagement": {
+    "riskPerTradePercent": 1.0,
+    "maxRiskPerTradePercent": 2.0,
+    "targetRMultiple": 2.0,
+    "partialProfitPercent": 50,
+    "moveToBreakevenAfterR": 2.0,
+    "trailingStopMethod": "opposite_macd_cross",
+    "entryTiming": "candle_close_only"
+  },
+
+  "alerts": {
+    "tier1_setup": {
+      "enabled": true,
+      "types": [
+        "approaching_qualified_zone",
+        "divergence_forming",
+        "mtf_alignment_shifting"
+      ]
+    },
+    "tier2_entry": {
+      "enabled": true,
+      "types": [
+        "long_entry_confirmed",
+        "short_entry_confirmed",
+        "reversal_triggered"
+      ]
+    },
+    "tier3_management": {
+      "enabled": true,
+      "types": [
+        "take_partial_profit",
+        "move_stop_breakeven",
+        "exit_signal"
+      ]
+    }
+  },
+
+  "tradingSession": {
+    "morningScanDuration": 5,
+    "unit": "minutes",
+    "procedure": [
+      "Check Daily MACD vs zero (bias)",
+      "Identify crossover setups far from zero",
+      "Look for divergence formations",
+      "Verify 3-timeframe alignment",
+      "Check price at key levels",
+      "Confirm histogram pattern"
+    ]
+  }
+}

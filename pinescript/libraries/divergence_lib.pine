@@ -1,0 +1,86 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - DIVERGENCE LIBRARY
+// ══════════════════════════════════════════════════════════════════════════════
+// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 3)
+// Description: Reusable functions for divergence detection
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=5
+// @description Library for detecting price/indicator divergences
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTATION PLAN
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// FUNCTION: detectPivotLow
+// ------------------------
+// Parameters:
+// - source: series to analyze
+// - leftBars: bars to left for pivot
+// - rightBars: bars to right for pivot
+// Returns: pivot low value and bar index
+//
+// FUNCTION: detectPivotHigh
+// -------------------------
+// Parameters:
+// - source: series to analyze
+// - leftBars: bars to left for pivot
+// - rightBars: bars to right for pivot
+// Returns: pivot high value and bar index
+//
+// FUNCTION: findBullishDivergence
+// -------------------------------
+// Parameters:
+// - priceSource: typically 'low'
+// - indicatorSource: MACD or other oscillator
+// - lookback: how far back to check
+// Returns: boolean (divergence found), line coordinates
+//
+// Logic:
+// 1. Find two recent pivot lows in price
+// 2. Find corresponding pivot lows in indicator
+// 3. Check: price LL + indicator HL = bullish divergence
+//
+// FUNCTION: findBearishDivergence
+// -------------------------------
+// Parameters:
+// - priceSource: typically 'high'
+// - indicatorSource: MACD or other oscillator
+// - lookback: how far back to check
+// Returns: boolean (divergence found), line coordinates
+//
+// Logic:
+// 1. Find two recent pivot highs in price
+// 2. Find corresponding pivot highs in indicator
+// 3. Check: price HH + indicator LH = bearish divergence
+//
+// FUNCTION: drawDivergenceLine
+// ----------------------------
+// Parameters:
+// - start_bar, start_price
+// - end_bar, end_price
+// - type: bullish/bearish
+// - location: price/indicator pane
+// Returns: line id for management
+//
+// ══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER CODE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Note: This is a library template
+// In TradingView, libraries use: library("DivergenceLib")
+// For now, keeping as indicator for development
+
+indicator("Divergence Library (Dev)", overlay=false)
+
+// Placeholder pivot detection
+pivotHigh = ta.pivothigh(high, 5, 2)
+pivotLow = ta.pivotlow(low, 5, 2)
+
+// Plot pivots for visualization during development
+plot(pivotHigh, "Pivot High", style=plot.style_circles, color=color.red, linewidth=3, offset=-2)
+plot(pivotLow, "Pivot Low", style=plot.style_circles, color=color.green, linewidth=3, offset=-2)
+
+// TODO: Implement full divergence detection functions
+// TODO: Add line drawing utilities
+// TODO: Add divergence strength calculation
