@@ -1,64 +1,145 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// MACD MONEY MAP - TREND SYSTEM (SYSTEM 1)
+// MACD MONEY MAP - TREND SYSTEM (SYSTEM 1) - PHASE 2 IMPLEMENTATION
 // ══════════════════════════════════════════════════════════════════════════════
-// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 2)
-// Description: Trend detection with zero line rule and qualified crossovers
-// ══════════════════════════════════════════════════════════════════════════════
-
-//@version=5
-indicator("MACD Money Map - Trend System", shorttitle="MACD-MM Trend", overlay=false)
-
-// ══════════════════════════════════════════════════════════════════════════════
-// IMPLEMENTATION PLAN - PHASE 2
-// ══════════════════════════════════════════════════════════════════════════════
-//
-// 2.1 Zero Line Rule Implementation
-// ---------------------------------
-// - Above zero → Long bias visual indicator (green background/label)
-// - Below zero → Short bias visual indicator (red background/label)
-// - Clear "LONGS ONLY" / "SHORTS ONLY" display
-//
-// 2.2 Crossover Detection Engine
-// ------------------------------
-// - Bullish crossover detection (MACD crosses above Signal)
-// - Bearish crossover detection (MACD crosses below Signal)
-// - Record timestamp and price of crossover
-// - Track candles since crossover
-//
-// 2.3 Distance Qualification Filter
-// ---------------------------------
-// - Calculate absolute distance from zero line
-// - Compare against configurable threshold
-// - Support multiple threshold methods:
-//   a) Fixed value
-//   b) ATR-based (recommended)
-//   c) Percentage-based
-// - Mark crossovers as "Qualified" or "Chop Zone"
-// - Visual differentiation between qualified/unqualified
-//
-// 2.4 Candle Confirmation Delay
-// -----------------------------
-// - Counter for candles since crossover
-// - Configurable wait period (default: 2-3 candles)
-// - Validate crossover still valid after wait
-// - Cancel signal if invalidated
-// - Visual countdown display
-//
-// ══════════════════════════════════════════════════════════════════════════════
-// PLACEHOLDER CODE
+// Version: 1.1.0
+// Components:
+// 1. Detailed Trend Logic (Zero Line + Distance)
+// 2. Crossover Validation Engine
+// 3. Candle Confirmation Delay (The "Patience" Rule)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// TODO: Implement full trend system
-// This is a placeholder file to be completed in Phase 2
+//@version=6
+indicator("MACD Money Map - Trend System", shorttitle="MACD-MM Trend", overlay=true)
 
-// Basic MACD for reference
-[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. INPUTS & CONFIG
+// ══════════════════════════════════════════════════════════════════════════════
 
-plot(macdLine, "MACD", color=color.blue)
-plot(signalLine, "Signal", color=color.orange)
-hline(0, "Zero", color=color.gray)
+// MACD Settings (Must match Base)
+fastLength   = input.int(12, "Fast Length", group="MACD")
+slowLength   = input.int(26, "Slow Length", group="MACD")
+signalLength = input.int(9, "Signal Length", group="MACD")
+src          = input.source(close, "Source", group="MACD")
 
-// Placeholder alert
-alertcondition(ta.crossover(macdLine, signalLine), 
-    title="Trend System - Long Setup", 
-    message="Placeholder: Trend Long Setup")
+// System 1 Rules
+confirmBars  = input.int(2, "Confirmation Candles", minval=0, maxval=5, 
+              tooltip="How many candles to wait AFTER cross before entry. Video suggests 2-3.", group="Strategy Rules")
+              
+// Filter Settings (ATR logic imported from Base)
+useATR       = input.bool(true, "Use ATR Distance?", group="Filters")
+atrLen       = input.int(14, "ATR Length", group="Filters")
+atrMult      = input.float(1.0, "ATR Mult", step=0.1, group="Filters")
+fixedDist    = input.float(0.0001, "Fixed Dist", step=0.0001, group="Filters")
+
+// Debugging
+showDebug    = input.bool(false, "Show Debug Labels", group="Debugging")
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. CALCULATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// 2.1 Core MACD
+[macdLine, signalLine, histLine] = ta.macd(src, fastLength, slowLength, signalLength)
+
+// 2.2 Distance / Chop Zone Qualification
+atr_value    = ta.atr(atrLen)
+threshold    = useATR ? (atr_value * atrMult) : fixedDist
+dist_val     = math.abs(macdLine)
+is_qualified = dist_val >= threshold
+
+// 2.3 Trend Bias (Zero Line Rule)
+// "Trend Law": Trend is defined by which side of zero we are on
+bias_long    = macdLine > 0
+bias_short   = macdLine < 0
+
+// 2.4 Crossover Detection
+raw_cross_up = ta.crossover(macdLine, signalLine)
+raw_cross_dn = ta.crossunder(macdLine, signalLine)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. SIGNAL ENGINE (The "Patience" Logic)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// We need to track the state of a crossover over time.
+// State Machine:
+// 0 = No Signal
+// 1 = Pending Confirmation (Waiting for candles)
+// 2 = Valid Signal (Entry)
+// -1 = Invalidated (MACD crossed back or dropped into chop zone)
+
+// Variables to store state
+var int wait_counter = 0
+var bool pending_long = false
+var bool pending_short = false
+
+// --- LOGIC LOOP ---
+
+// Reset trigger specific variables
+trigger_long = false
+trigger_short = false
+
+// STEP A: Detect New Raw Signal
+if raw_cross_up and is_qualified and bias_long
+    pending_long := true
+    pending_short := false // Cancel opposing
+    wait_counter := 0      // Reset counter
+
+if raw_cross_dn and is_qualified and bias_short
+    pending_short := true
+    pending_long := false  // Cancel opposing
+    wait_counter := 0      // Reset counter
+
+// STEP B: Manage Pending State
+if pending_long
+    // Check validation: Must stay above signal line AND above zero
+    if macdLine < signalLine or macdLine < 0
+        pending_long := false // Invalidated! Analysis failed.
+        wait_counter := 0
+    else
+        // Increment counter
+        wait_counter += 1
+        
+        // Check if finished waiting
+        // Note: We use >= because 'confirmBars' includes the cross bar? 
+        // Strategy says "Wait 2-3 candles AFTER".
+        // If cross is bar 0. Bar 1 is first wait. Bar 2 is second wait.
+        if wait_counter > confirmBars
+            trigger_long := true
+            pending_long := false // Signal fired, reset state
+            wait_counter := 0
+
+if pending_short
+    // Check validation: Must stay below signal line AND below zero
+    if macdLine > signalLine or macdLine > 0
+        pending_short := false // Invalidated!
+        wait_counter := 0
+    else
+        wait_counter += 1
+        
+        if wait_counter > confirmBars
+            trigger_short := true
+            pending_short := false
+            wait_counter := 0
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. VISUALIZATION & OUTPUTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Plot Signals
+plotshape(trigger_long, "Long Entry", shape.triangleup, location.belowbar, color.green, size=size.small, text="TREND BUY")
+plotshape(trigger_short, "Short Entry", shape.triangledown, location.abovebar, color.red, size=size.small, text="TREND SELL")
+
+// Debugging Labels (Validation)
+// Shows the count "1", "2" above bars while waiting
+if showDebug and pending_long
+    label.new(bar_index, high, str.tostring(wait_counter), color=color.green, style=label.style_none, textcolor=color.green)
+if showDebug and pending_short
+    label.new(bar_index, low, str.tostring(wait_counter), color=color.red, style=label.style_none, textcolor=color.red)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. ALERTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+alertcondition(trigger_long, "Trend Long Entry", "MACD System 1: CONFIRMED LONG ENTRY on {{ticker}}")
+alertcondition(trigger_short, "Trend Short Entry", "MACD System 1: CONFIRMED SHORT ENTRY on {{ticker}}")
+

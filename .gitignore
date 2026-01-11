@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+Thumbs.db
+.env
+.npm
+*.log
+
+# VS Code (Optional, depending on team preference)
+.vscode/
+
+# Project Specific
+tests/e2e/results.png
+.playwright-mcp/

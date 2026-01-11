@@ -1,0 +1,28 @@
+{
+  "name": "macd-3-system",
+  "version": "1.0.0",
+  "description": "A comprehensive TradingView-based implementation of the **MACD Money Map** trading strategy, featuring three integrated systems for identifying high-probability trades.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RElena85/macd-3-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RElena85/macd-3-system/issues"
+  },
+  "homepage": "https://github.com/RElena85/macd-3-system#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}

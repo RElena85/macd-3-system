@@ -1,134 +1,121 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// MACD MONEY MAP - BASE INDICATOR
+// MACD MONEY MAP - BASE INDICATOR (PHASE 1 IMPLEMENTATION)
 // ══════════════════════════════════════════════════════════════════════════════
-// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 1)
-// Description: Core MACD calculation with enhanced visualization
-// Reference: https://www.youtube.com/watch?v=S2HaCa0b-bY
-// ══════════════════════════════════════════════════════════════════════════════
-
-//@version=5
-indicator("MACD Money Map - Base", shorttitle="MACD-MM", overlay=false)
-
-// ══════════════════════════════════════════════════════════════════════════════
-// INPUTS
+// Version: 1.1.0
+// Components:
+// 1. Core MACD Calculation
+// 2. Enhanced Histogram Visualization (4-color momentum)
+// 3. Zero Line Bias Background
+// 4. Distance-from-Zero Calculation (The "Chop Zone" Filter)
 // ══════════════════════════════════════════════════════════════════════════════
 
-// MACD Settings
-fastLength   = input.int(12, "Fast Length", minval=1, group="MACD Settings")
-slowLength   = input.int(26, "Slow Length", minval=1, group="MACD Settings")
-signalLength = input.int(9, "Signal Length", minval=1, group="MACD Settings")
-src          = input.source(close, "Source", group="MACD Settings")
-
-// Distance Settings
-useATRDistance  = input.bool(true, "Use ATR-Based Distance", group="Distance Settings")
-atrLength       = input.int(14, "ATR Length", minval=1, group="Distance Settings")
-atrMultiplier   = input.float(1.0, "ATR Multiplier", minval=0.1, step=0.1, group="Distance Settings")
-fixedDistance   = input.float(0.5, "Fixed Distance (if not using ATR)", minval=0, group="Distance Settings")
-
-// Visual Settings
-showZeroLine    = input.bool(true, "Show Zero Line", group="Visual Settings")
-showBackground  = input.bool(true, "Show Bias Background", group="Visual Settings")
-showDistance    = input.bool(true, "Show Distance Threshold", group="Visual Settings")
+//@version=6
+indicator("MACD Money Map - Base", shorttitle="MACD-MM Base", overlay=false)
 
 // ══════════════════════════════════════════════════════════════════════════════
-// CALCULATIONS
+// 1. SETTINGS & CONFIGURATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-// MACD Calculation
+// Group: MACD Constants
+grp_macd = "MACD Settings"
+fastLength   = input.int(12, "Fast Length", minval=1, group=grp_macd)
+slowLength   = input.int(26, "Slow Length", minval=1, group=grp_macd)
+signalLength = input.int(9, "Signal Length", minval=1, group=grp_macd)
+src          = input.source(close, "Source", group=grp_macd)
+
+// Group: Distance Filter (System 1 Chop Zone)
+grp_dist = "Distance Filter (Chop Zone)"
+useATR       = input.bool(true, "Use Volatility (ATR) for Threshold?", group=grp_dist, 
+              tooltip="Recommended: True. Adjusts the 'chop zone' size based on market volatility.")
+atrLen       = input.int(14, "ATR Length", minval=1, group=grp_dist)
+atrMult      = input.float(1.0, "ATR Multiplier", minval=0.1, step=0.1, group=grp_dist,
+              tooltip="Crypto: 1.5-2.0 | Forex: 1.0 | Stocks: 1.2")
+fixedThreshold = input.float(0.0001, "Fixed Threshold (if ATR off)", minval=0.0, step=0.0001, group=grp_dist)
+
+// Group: Visuals
+grp_vis = "Visual Settings"
+showBiasBg   = input.bool(true, "Show Trend Bias Background", group=grp_vis)
+showDistLines= input.bool(true, "Show Chop Zone Lines", group=grp_vis)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. CALCULATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// 2.1 MACD Core
 [macdLine, signalLine, histLine] = ta.macd(src, fastLength, slowLength, signalLength)
 
-// ATR for distance threshold
-atr = ta.atr(atrLength)
-distanceThreshold = useATRDistance ? atr * atrMultiplier : fixedDistance
+// 2.2 Distance Threshold Calculation
+// If using ATR, threshold is dynamic. If fixed, it's static.
+volatility_atr = ta.atr(atrLen)
+current_threshold = useATR ? (volatility_atr * atrMult) : fixedThreshold
 
-// Zero line position
-aboveZero = macdLine > 0
-belowZero = macdLine < 0
+// 2.3 Distance Logic
+dist_from_zero = math.abs(macdLine)
+is_qualified   = dist_from_zero >= current_threshold // "Qualified" means OUTSIDE the chop zone
+is_chop_zone   = not is_qualified
 
-// Distance qualification
-distanceFromZero = math.abs(macdLine)
-isQualified = distanceFromZero > distanceThreshold
-
-// Crossovers
-bullishCross = ta.crossover(macdLine, signalLine)
-bearishCross = ta.crossunder(macdLine, signalLine)
+// 2.4 Bias Determination (Zero Line Rule)
+is_bullish_bias = macdLine > 0
+is_bearish_bias = macdLine < 0
 
 // ══════════════════════════════════════════════════════════════════════════════
-// VISUALIZATION
+// 3. VISUALIZATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-// MACD Line
-plot(macdLine, "MACD", color=color.blue, linewidth=2)
+// 3.1 Background Color (The Zero Line Bias)
+// Green tint if MACD > 0, Red tint if MACD < 0
+bg_color = not showBiasBg ? na :
+           is_bullish_bias ? color.new(color.green, 95) :
+           is_bearish_bias ? color.new(color.red, 95) : na
+bgcolor(bg_color, title="Trend Bias Background")
 
-// Signal Line
-plot(signalLine, "Signal", color=color.orange, linewidth=1)
+// 3.2 Enhanced Histogram (4 Colors)
+// Bright Green: Positive & Growing
+// Pale Green:   Positive & Shrinking (Exhaustion)
+// Bright Red:   Negative & Growing
+// Pale Red:     Negative & Shrinking (Exhaustion)
+hist_color = if histLine >= 0
+    histLine > histLine[1] ? color.new(#26a69a, 0) : color.new(#26a69a, 60)
+else
+    histLine < histLine[1] ? color.new(#ef5350, 0) : color.new(#ef5350, 60)
 
-// Histogram with gradient colors
-histColor = histLine >= 0 ? 
-    (histLine > histLine[1] ? color.new(color.green, 0) : color.new(color.green, 50)) :
-    (histLine < histLine[1] ? color.new(color.red, 0) : color.new(color.red, 50))
-plot(histLine, "Histogram", style=plot.style_columns, color=histColor)
+plot(histLine, title="Histogram", style=plot.style_columns, color=hist_color)
 
-// Zero Line
-hline(0, "Zero Line", color=color.gray, linestyle=hline.style_solid, linewidth=1)
+// 3.3 Lines
+plot(macdLine,   title="MACD Line",   color=#2962FF, linewidth=2)
+plot(signalLine, title="Signal Line", color=#FF6D00, linewidth=1)
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_solid)
 
-// Distance Threshold Lines (optional)
-upperThreshold = plot(showDistance ? distanceThreshold : na, "Upper Threshold", 
-    color=color.new(color.green, 70), style=plot.style_line)
-lowerThreshold = plot(showDistance ? -distanceThreshold : na, "Lower Threshold", 
-    color=color.new(color.red, 70), style=plot.style_line)
-
-// Background coloring for bias
-bgcolor(showBackground and aboveZero ? color.new(color.green, 95) : 
-        showBackground and belowZero ? color.new(color.red, 95) : na)
-
-// Crossover markers
-plotshape(bullishCross and isQualified and aboveZero, "Qualified Long", 
-    style=shape.triangleup, location=location.bottom, 
-    color=color.green, size=size.small)
-plotshape(bearishCross and isQualified and belowZero, "Qualified Short", 
-    style=shape.triangledown, location=location.top, 
-    color=color.red, size=size.small)
+// 3.4 Chop Zone Thresholds
+// Visualizes the area you should NOT trade crossovers in
+u_zone = plot(showDistLines ? current_threshold : na, "Upper Chop Limit", color=color.new(color.gray, 50), style=plot.style_linebr)
+l_zone = plot(showDistLines ? -current_threshold : na, "Lower Chop Limit", color=color.new(color.gray, 50), style=plot.style_linebr)
+fill(u_zone, l_zone, color=color.new(color.gray, 90), title="Chop Zone Fill")
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ALERTS (Placeholder)
+// 4. DATA WINDOW / INSPECTION
 // ══════════════════════════════════════════════════════════════════════════════
-
-alertcondition(bullishCross and isQualified and aboveZero, 
-    title="Qualified Long Crossover", 
-    message="MACD Money Map: Qualified LONG crossover on {{ticker}}")
-
-alertcondition(bearishCross and isQualified and belowZero, 
-    title="Qualified Short Crossover", 
-    message="MACD Money Map: Qualified SHORT crossover on {{ticker}}")
+// Helps you see values when hovering
+plotchar(is_qualified, "Qualified?", "", location.top, color=color.black, size=size.tiny)
+plotchar(current_threshold, "Threshold", "", location.top, color=color.black, size=size.tiny)
 
 // ══════════════════════════════════════════════════════════════════════════════
-// INFO TABLE (Placeholder)
+// 5. STATUS DASHBOARD (Bottom Right)
 // ══════════════════════════════════════════════════════════════════════════════
+var table info_table = table.new(position.bottom_right, 2, 3, bgcolor=color.new(color.black, 50), border_color=color.black)
 
-// TODO: Add information table showing:
-// - Current bias (Long/Short)
-// - MACD value
-// - Distance from zero
-// - Distance threshold
-// - Qualification status
+if barstate.islast
+    // Header
+    table.cell(info_table, 0, 0, "MACD STATUS", text_color=color.white, text_size=size.small, bgcolor=color.new(color.blue, 80))
+    table.cell(info_table, 1, 0, "VALUE", text_color=color.white, text_size=size.small, bgcolor=color.new(color.blue, 80))
+    
+    // Bias Row
+    table.cell(info_table, 0, 1, "Market Bias", text_color=color.white, text_size=size.small)
+    table.cell(info_table, 1, 1, is_bullish_bias ? "LONG ONLY 🟢" : "SHORT ONLY 🔴", 
+               text_color=is_bullish_bias ? color.green : color.red, text_size=size.small)
+    
+    // Distance Row
+    table.cell(info_table, 0, 2, "Zone", text_color=color.white, text_size=size.small)
+    table.cell(info_table, 1, 2, is_qualified ? "TRADABLE ✨" : "CHOP ZONE ⚠️", 
+               text_color=is_qualified ? color.green : color.orange, text_size=size.small)
 
-// ══════════════════════════════════════════════════════════════════════════════
-// IMPLEMENTATION NOTES
-// ══════════════════════════════════════════════════════════════════════════════
-// 
-// Phase 1 Tasks:
-// [x] Basic MACD calculation
-// [x] Zero line visualization
-// [x] Histogram with color gradient
-// [x] Distance threshold calculation
-// [x] Basic crossover detection
-// [ ] Information dashboard table
-// [ ] Comprehensive testing
-//
-// Next Steps:
-// - Implement System 1 (Trend) features in macd_trend_system.pine
-// - Add confirmation candle logic
-// - Enhance visual dashboard
-//
-// ══════════════════════════════════════════════════════════════════════════════

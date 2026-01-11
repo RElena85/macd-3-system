@@ -1,0 +1,87 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// MACD MONEY MAP - REGRESSION TEST STRATEGY (UPDATED PHASE 2)
+// ══════════════════════════════════════════════════════════════════════════════
+// Purpose: Validate Phase 2 Logic (Confirmation Delay + Filters)
+// ══════════════════════════════════════════════════════════════════════════════
+
+//@version=6
+strategy("TEST SUITE: MACD Money Map", overlay=true, pyramiding=1, initial_capital=10000)
+
+// ════════════════════════════════
+// 1. INPUTS
+// ════════════════════════════════
+fastLength   = input.int(12, "Fast Len")
+slowLength   = input.int(26, "Slow Len")
+signalLength = input.int(9, "Sig Len")
+confirmBars  = input.int(2, "Wait Bars") // Matches System 1 default
+
+// ════════════════════════════════
+// 2. LOGIC UNDER TEST
+// ════════════════════════════════
+[macdLine, signalLine, histLine] = ta.macd(close, fastLength, slowLength, signalLength)
+
+// ATR Filter
+atr_val = ta.atr(14)
+threshold = atr_val * 1.0 // Default 1.0 multiplier
+is_qualified = math.abs(macdLine) >= threshold
+
+// Bias
+is_long_bias = macdLine > 0
+is_short_bias = macdLine < 0
+
+// Raw Crossroads
+raw_long = ta.crossover(macdLine, signalLine)
+raw_short = ta.crossunder(macdLine, signalLine)
+
+// WAIT LOGIC (The new feature)
+var int wait_cnt = 0
+var bool pend_long = false
+var bool pend_short = false
+
+trigger_long = false
+trigger_short = false
+
+if raw_long and is_qualified and is_long_bias
+    pend_long := true
+    pend_short := false
+    wait_cnt := 0
+
+if raw_short and is_qualified and is_short_bias
+    pend_short := true
+    pend_long := false
+    wait_cnt := 0
+
+if pend_long
+    if macdLine < signalLine // Invalidated
+        pend_long := false
+        wait_cnt := 0
+    else
+        wait_cnt += 1
+        if wait_cnt > confirmBars
+            trigger_long := true
+            pend_long := false
+            wait_cnt := 0
+
+if pend_short
+    if macdLine > signalLine // Invalidated
+        pend_short := false
+        wait_cnt := 0
+    else
+        wait_cnt += 1
+        if wait_cnt > confirmBars
+            trigger_short := true
+            pend_short := false
+            wait_cnt := 0
+
+// ════════════════════════════════
+// 3. EXECUTION FOR VALIDATION
+// ════════════════════════════════
+if trigger_long
+    strategy.entry("L_P2", strategy.long)
+
+if trigger_short
+    strategy.entry("S_P2", strategy.short)
+
+// Debug
+plotshape(trigger_long, style=shape.triangleup, color=color.green)
+plotshape(raw_long, style=shape.xcross, color=color.gray) // Show where the raw cross happened vs the entry
