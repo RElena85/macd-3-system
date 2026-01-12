@@ -1,94 +1,278 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// MACD MONEY MAP - MASTER INDICATOR
+// MACD MONEY MAP - MASTER INDICATOR (PHASE 4)
 // ══════════════════════════════════════════════════════════════════════════════
-// Version: 1.0.0 (Placeholder - To Be Implemented in Phase 5)
-// Description: Combined master indicator integrating all three systems
-// ══════════════════════════════════════════════════════════════════════════════
-
-//@version=5
-indicator("MACD Money Map - Master", shorttitle="MACD-MM Master", overlay=true)
-
-// ══════════════════════════════════════════════════════════════════════════════
-// IMPLEMENTATION PLAN - PHASE 5
-// ══════════════════════════════════════════════════════════════════════════════
-//
-// 5.1 System Integration
-// ----------------------
-// - Import/combine all three system logics
-// - Unified signal processing pipeline
-// - Single indicator for all functionality
-//
-// 5.2 Signal Scoring & Prioritization
-// -----------------------------------
-// Point System:
-// - Trend System Signal: +2 points
-// - Reversal System Signal: +3 points (higher risk/reward)
-// - Each aligned timeframe: +1 point
-// - Structure confluence: +1 point
-// - Distance qualification: +1 point
-//
-// Maximum possible: 8 points
-// Minimum to trade: 5 points
-//
-// 5.3 Visual Dashboard Components
-// -------------------------------
-// Dashboard Table:
-// ┌─────────────────────────────────────┐
-// │     MACD MONEY MAP DASHBOARD        │
-// ├─────────────────────────────────────┤
-// │ BIAS:        [LONG ✓] / [SHORT]     │
-// │ GRADE:       [A+]                   │
-// │ SCORE:       [7/8]                  │
-// ├─────────────────────────────────────┤
-// │ SYSTEMS:                            │
-// │ ✓ Trend    - Qualified crossover    │
-// │ ✓ Reversal - Div + Flip            │
-// │ ✓ Confirm  - 3/3 TF aligned        │
-// ├─────────────────────────────────────┤
-// │ DETAILS:                            │
-// │ MACD:       0.85                    │
-// │ Distance:   1.2 (threshold: 0.5)   │
-// │ At S/R:     YES (support @ 50.20)  │
-// └─────────────────────────────────────┘
-//
-// 5.4 Entry/Exit Markers
-// ----------------------
-// - Large triangle for A+ entries
-// - Medium triangle for A entries
-// - Small marker for B setups (warning)
-// - Exit markers when opposite cross
-//
-// 5.5 Information Panel
-// ---------------------
-// Show in real-time:
-// - Current MACD value
-// - Distance from zero (actual vs threshold)
-// - Time/candles since last crossover
-// - Divergence status (None/Forming/Confirmed)
-// - Histogram pattern status
-// - MTF alignment status
-//
-// ══════════════════════════════════════════════════════════════════════════════
-// PLACEHOLDER CODE
+// Version: 2.0.0
+// Description: The unified "Money Map" system combining Trend (System 1), 
+//              Reversal (System 2), and Visuals (Phase 1) into a single tool.
+//              Includes "The Coach" (MTF Filter) for higher-probability setups.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// TODO: Implement full master indicator
-// This is a placeholder file to be completed in Phase 5
+//@version=6
+indicator("MACD Money Map - Master Strategy", shorttitle="MACD-MM Master", overlay=true, max_lines_count=500, max_labels_count=500)
 
-// Placeholder - basic functionality
-[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. INPUTS & CONFIGURATION
+// ══════════════════════════════════════════════════════════════════════════════
 
-// Basic bias display
-var label biasLabel = na
-label.delete(biasLabel)
-biasLabel := label.new(
-    bar_index, high,
-    macdLine > 0 ? "BIAS: LONG" : "BIAS: SHORT",
-    color = macdLine > 0 ? color.green : color.red,
-    textcolor = color.white,
-    style = label.style_label_down)
+// --- Group: MACD Core ---
+grp_macd     = "MACD Settings"
+fastLength   = input.int(12, "Fast Length", group=grp_macd)
+slowLength   = input.int(26, "Slow Length", group=grp_macd)
+signalLength = input.int(9, "Signal Length", group=grp_macd)
+src          = input.source(close, "Source", group=grp_macd)
 
-// Placeholder alerts
-alertcondition(false, title="A+ Long Entry", message="MACD Money Map: A+ LONG Entry")
-alertcondition(false, title="A+ Short Entry", message="MACD Money Map: A+ SHORT Entry")
-alertcondition(false, title="Exit Signal", message="MACD Money Map: Exit Signal")
+// --- Group: System 1 (Trend) ---
+grp_trend    = "System 1: Trend Rules"
+trend_on     = input.bool(true, "Show Trend Signals (Triangles)?", group=grp_trend)
+confirmBars  = input.int(2, "Patience Rule (Candles to Wait)", minval=0, maxval=5, group=grp_trend, tooltip="Wait X bars after cross to confirm trend.")
+
+// --- Group: System 1 Filters (Chop Zone) ---
+grp_filter   = "System 1: Chop Zone Filter"
+useATR       = input.bool(true, "Use Dynamic ATR Zone?", group=grp_filter)
+atrLen       = input.int(14, "ATR Length", group=grp_filter)
+atrMult      = input.float(1.0, "ATR Multiplier", step=0.1, group=grp_filter)
+fixedDist    = input.float(0.0001, "Fixed Threshold", step=0.0001, group=grp_filter)
+
+// --- Group: System 2 (Reversal) ---
+grp_rev      = "System 2: Reversal Rules"
+rev_on       = input.bool(true, "Show Reversal Signals (Divergence)?", group=grp_rev)
+lbL          = input.int(5, "Pivot Left", group=grp_rev)
+lbR          = input.int(5, "Pivot Right (Lag)", group=grp_rev)
+rangeUpper   = input.int(60, "Max Lookback Range", group=grp_rev)
+plotLines    = input.bool(true, "Draw Divergence Lines", group=grp_rev)
+
+// --- Group: The Coach (MTF Filter) ---
+grp_mtf      = "System 3: The Coach (MTF)"
+mtf_on       = input.bool(false, "Enable 'Coach' Filter?", group=grp_mtf, tooltip="If ON, Trend Buys only show when Higher Timeframe MACD is Bullish.")
+mtf_tf       = input.timeframe("D", "Coach Timeframe", group=grp_mtf)
+
+// --- Group: Visuals ---
+grp_vis      = "Visual Settings"
+showTable    = input.bool(true, "Show Status Dashboard", group=grp_vis)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. CORE CALCULATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// 2.1 Standard MACD (Current Chart)
+[macdLine, signalLine, histLine] = ta.macd(src, fastLength, slowLength, signalLength)
+
+// 2.2 Chop Zone Calculation
+atr_val   = ta.atr(atrLen)
+threshold = useATR ? (atr_val * atrMult) : fixedDist
+dist_val  = math.abs(macdLine)
+// Qualified means we are OUTSIDE the noise/chop zone
+is_qualified = dist_val >= threshold
+
+// 2.3 Zero Line Bias
+bias_long  = macdLine > 0
+bias_short = macdLine < 0
+
+// 2.4 MTF "Coach" Calculation
+// Getting MACD line from higher timeframe
+[coach_macd, _, _] = request.security(syminfo.tickerid, mtf_tf, ta.macd(close, fastLength, slowLength, signalLength), lookahead=barmerge.lookahead_off)
+coach_bullish = coach_macd > 0
+coach_bearish = coach_macd < 0
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. SYSTEM 1: TREND ENGINE (With Patience Rule)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// State Variables
+var int t_wait_counter = 0
+var bool t_pending_long = false
+var bool t_pending_short = false
+
+// Crossovers
+raw_cross_up = ta.crossover(macdLine, signalLine)
+raw_cross_dn = ta.crossunder(macdLine, signalLine)
+
+// Outputs
+t_trigger_long = false
+t_trigger_short = false
+
+if trend_on
+    // Step A: Detect Initial Signal (Raw)
+    // Must be Qualified (Outside Chop) AND Matching Bias (Zero Line Rule)
+    if raw_cross_up and is_qualified and bias_long
+        t_pending_long := true
+        t_pending_short := false
+        t_wait_counter := 0
+
+    if raw_cross_dn and is_qualified and bias_short
+        t_pending_short := true
+        t_pending_long := false
+        t_wait_counter := 0
+
+    // Step B: Manage Waiting Period
+    if t_pending_long
+        // Validate: Must stay bullish
+        if macdLine < signalLine or macdLine < 0
+            t_pending_long := false // Failed
+            t_wait_counter := 0
+        else
+            t_wait_counter += 1
+            if t_wait_counter > confirmBars
+                // MTF CHECK: Only fire if Coach agrees (or is disabled)
+                if not mtf_on or coach_bullish
+                    t_trigger_long := true
+                t_pending_long := false // Reset
+                t_wait_counter := 0
+
+    if t_pending_short
+        // Validate: Must stay bearish
+        if macdLine > signalLine or macdLine > 0
+            t_pending_short := false // Failed
+            t_wait_counter := 0
+        else
+            t_wait_counter += 1
+            if t_wait_counter > confirmBars
+                // MTF CHECK
+                if not mtf_on or coach_bearish
+                    t_trigger_short := true
+                t_pending_short := false
+                t_wait_counter := 0
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. SYSTEM 2: REVERSAL ENGINE (Divergence)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Pivot points
+pl = ta.pivotlow(macdLine, lbL, lbR)
+ph = ta.pivothigh(macdLine, lbL, lbR)
+
+// Arrays for logic
+var pivot_lows_price = array.new_float(0)
+var pivot_lows_macd  = array.new_float(0)
+var pivot_lows_idx   = array.new_int(0)
+var pivot_highs_price = array.new_float(0)
+var pivot_highs_macd  = array.new_float(0)
+var pivot_highs_idx   = array.new_int(0)
+
+r_trigger_long = false
+r_trigger_short = false
+
+if rev_on
+    // BULLISH DIVERGENCE
+    if not na(pl)
+        array.push(pivot_lows_price, low[lbR])
+        array.push(pivot_lows_macd, macdLine[lbR])
+        array.push(pivot_lows_idx, bar_index[lbR])
+        if array.size(pivot_lows_price) > 5
+            array.shift(pivot_lows_price)
+            array.shift(pivot_lows_macd)
+            array.shift(pivot_lows_idx)
+            
+        if array.size(pivot_lows_price) >= 2
+            curr_p = array.get(pivot_lows_price, -1)
+            curr_m = array.get(pivot_lows_macd, -1)
+            curr_i = array.get(pivot_lows_idx, -1)
+            
+            for i = array.size(pivot_lows_price) - 2 to 0
+                prev_p = array.get(pivot_lows_price, i)
+                prev_m = array.get(pivot_lows_macd, i)
+                prev_i = array.get(pivot_lows_idx, i)
+                
+                if (bar_index - prev_i) > rangeUpper
+                    break
+                
+                // Divergence: Price Lower Low, MACD Higher Low
+                if curr_p < prev_p and curr_m > prev_m
+                    // Found Divergence!
+                    if plotLines
+                        line.new(prev_i, prev_p, curr_i, curr_p, color=color.blue, width=2)
+                    
+                    // Signal Logic: If MACD is essentially bullish (crossed up)
+                    if macdLine > signalLine
+                        r_trigger_long := true
+                    break
+
+    // BEARISH DIVERGENCE
+    if not na(ph)
+        array.push(pivot_highs_price, high[lbR])
+        array.push(pivot_highs_macd, macdLine[lbR])
+        array.push(pivot_highs_idx, bar_index[lbR])
+        if array.size(pivot_highs_price) > 5
+            array.shift(pivot_highs_price)
+            array.shift(pivot_highs_macd)
+            array.shift(pivot_highs_idx)
+            
+        if array.size(pivot_highs_price) >= 2
+            curr_p = array.get(pivot_highs_price, -1)
+            curr_m = array.get(pivot_highs_macd, -1)
+            curr_i = array.get(pivot_highs_idx, -1)
+            
+            for i = array.size(pivot_highs_price) - 2 to 0
+                prev_p = array.get(pivot_highs_price, i)
+                prev_m = array.get(pivot_highs_macd, i)
+                prev_i = array.get(pivot_highs_idx, i)
+                
+                if (bar_index - prev_i) > rangeUpper
+                    break
+                
+                // Divergence: Price Higher High, MACD Lower High
+                if curr_p > prev_p and curr_m < prev_m
+                    if plotLines
+                        line.new(prev_i, prev_p, curr_i, curr_p, color=color.orange, width=2)
+                    
+                    if macdLine < signalLine
+                        r_trigger_short := true
+                    break
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. VISUALIZATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+// 5.0 Core Visuals (Phase 1)
+hist_color = if histLine >= 0
+    histLine > histLine[1] ? color.new(#26a69a, 0) : color.new(#26a69a, 60)
+else
+    histLine < histLine[1] ? color.new(#ef5350, 0) : color.new(#ef5350, 60)
+
+plot(histLine, title="Histogram", style=plot.style_columns, color=hist_color)
+plot(macdLine,   title="MACD Line",   color=#2962FF, linewidth=2)
+plot(signalLine, title="Signal Line", color=#FF6D00, linewidth=1)
+hline(0, "Zero Line", color=color.gray, linestyle=hline.style_solid)
+
+u_zone = plot(threshold, "Upper Chop Limit", color=color.new(color.gray, 50), style=plot.style_linebr)
+l_zone = plot(-threshold, "Lower Chop Limit", color=color.new(color.gray, 50), style=plot.style_linebr)
+fill(u_zone, l_zone, color=color.new(color.gray, 90), title="Chop Zone Fill")
+
+// 5.1 Trend Signals (System 1) - Triangles
+plotshape(t_trigger_long, "Trend Buy", shape.triangleup, location.belowbar, color.green, size=size.small, text="TREND")
+plotshape(t_trigger_short, "Trend Sell", shape.triangledown, location.abovebar, color.red, size=size.small, text="TREND")
+
+// 5.2 Reversal Signals (System 2) - Smaller/Different Triangles or Labels
+plotshape(r_trigger_long, "Rev Buy", shape.arrowup, location.belowbar, color.blue, size=size.tiny, text="REV", offset=-lbR)
+plotshape(r_trigger_short, "Rev Sell", shape.arrowdown, location.abovebar, color.orange, size=size.tiny, text="REV", offset=-lbR)
+// Note: Offset is -lbR because divergence is detected late (at Pivot confirmation)
+
+// 5.3 DASHBOARD
+var table info_table = table.new(position.bottom_right, 2, 4, bgcolor=color.new(color.black, 50), border_color=color.black)
+
+if showTable and barstate.islast
+    // Header
+    table.cell(info_table, 0, 0, "MACD MONEY MAP", text_color=color.white, bgcolor=color.new(color.blue, 70), text_size=size.small)
+    table.cell(info_table, 1, 0, "STATUS", text_color=color.white, bgcolor=color.new(color.blue, 70), text_size=size.small)
+    
+    // Row 1: Zero Line Bias (Actionable Language)
+    table.cell(info_table, 0, 1, "Market Bias", text_color=color.white, text_size=size.small)
+    table.cell(info_table, 1, 1, bias_long ? "LONG ONLY 🟢" : "SHORT ONLY 🔴", text_color=bias_long ? color.green : color.red, text_size=size.small)
+    
+    // Row 2: Chop Zone (Actionable Language)
+    table.cell(info_table, 0, 2, "Zone", text_color=color.white, text_size=size.small)
+    table.cell(info_table, 1, 2, is_qualified ? "TRADABLE ✨" : "CHOP ZONE ⚠️", text_color=is_qualified ? color.green : color.orange, text_size=size.small)
+    
+    // Row 3: The Coach (MTF)
+    msg_coach = mtf_on ? (coach_bullish ? "UP TREND" : "DOWN TREND") : "DISABLED"
+    col_coach = mtf_on ? (coach_bullish ? color.green : color.red) : color.gray
+    table.cell(info_table, 0, 3, "Coach (" + mtf_tf + ")", text_color=color.white, text_size=size.small)
+    table.cell(info_table, 1, 3, msg_coach, text_color=col_coach, text_size=size.small)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 6. ALERTS
+// ══════════════════════════════════════════════════════════════════════════════
+alertcondition(t_trigger_long, "Trend Buy", "Master: Trend Buy Signal")
+alertcondition(t_trigger_short, "Trend Sell", "Master: Trend Sell Signal")
+alertcondition(r_trigger_long, "Reversal Buy", "Master: Reversal Buy Signal")
+alertcondition(r_trigger_short, "Reversal Sell", "Master: Reversal Sell Signal")
